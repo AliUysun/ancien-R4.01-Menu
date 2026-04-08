@@ -1,10 +1,12 @@
 package com.yourcompany.menus.application.service;
 
+import com.yourcompany.menus.adapter.out.persistence.MenuRepositoryType;
 import com.yourcompany.menus.application.port.in.IManageMenusUseCase;
 import com.yourcompany.menus.application.port.out.IMenuRepository;
-import com.yourcompany.menus.application.port.out.IPlatService;
+import com.yourcompany.menus.application.port.out.IPlatClient;
 import com.yourcompany.menus.domain.entity.Menu;
 import com.yourcompany.menus.domain.entity.Plat;
+import com.yourcompany.menus.domain.service.IMenuMetier;
 import com.yourcompany.menus.domain.service.MenuMetier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -23,14 +25,18 @@ public class ManageMenusService implements IManageMenusUseCase {
     );
 
     private final IMenuRepository menuRepository;
-    private final IPlatService platService;
-    private final MenuMetier menuMetier;
+    private final IPlatClient platClient;
+    private final IMenuMetier menuMetier;
 
     @Inject
-    public ManageMenusService(IMenuRepository menuRepository, IPlatService platService) {
+    public ManageMenusService(@MenuRepositoryType IMenuRepository menuRepository, IPlatClient platClient, IMenuMetier menuMetier) {
         this.menuRepository = menuRepository;
-        this.platService = platService;
-        this.menuMetier = new MenuMetier();
+        this.platClient = platClient;
+        this.menuMetier = menuMetier;
+    }
+
+    public ManageMenusService(IMenuRepository menuRepository, IPlatClient platClient) {
+        this(menuRepository, platClient, new MenuMetier());
     }
 
     @Override
@@ -71,7 +77,7 @@ public class ManageMenusService implements IManageMenusUseCase {
             throw new IllegalStateException("Plat deja present dans ce menu: " + platId);
         }
 
-        Plat plat = platService.getPlatById(platId);
+        Plat plat = platClient.getPlatById(platId);
         var plats = new ArrayList<>(menu.getPlats());
         plats.add(plat);
         menu.setPlats(plats);
@@ -111,4 +117,3 @@ public class ManageMenusService implements IManageMenusUseCase {
         return menu;
     }
 }
-

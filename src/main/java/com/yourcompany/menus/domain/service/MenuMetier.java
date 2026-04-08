@@ -2,11 +2,14 @@ package com.yourcompany.menus.domain.service;
 
 import com.yourcompany.menus.domain.entity.Menu;
 import com.yourcompany.menus.domain.entity.Plat;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.math.BigDecimal;
 
-public class MenuMetier {
+@ApplicationScoped
+public class MenuMetier implements IMenuMetier {
 
+    @Override
     public void validerMenu(Menu menu) {
         if (menu == null) {
             throw new IllegalArgumentException("Le menu est obligatoire");
@@ -21,10 +24,10 @@ public class MenuMetier {
         }
     }
 
+    @Override
     public BigDecimal calculerPrixTotal(Menu menu) {
         return menu.getPlats().stream()
                 .map(Plat::getPrix)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
-

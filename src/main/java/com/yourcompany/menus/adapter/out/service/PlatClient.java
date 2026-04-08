@@ -1,6 +1,6 @@
 package com.yourcompany.menus.adapter.out.service;
 
-import com.yourcompany.menus.application.port.out.IPlatService;
+import com.yourcompany.menus.application.port.out.IPlatClient;
 import com.yourcompany.menus.domain.entity.Plat;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -9,11 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ApplicationScoped
-public class PlatServiceRestClient implements IPlatService {
+public class PlatClient implements IPlatClient {
 
     private final Map<Integer, Plat> catalogue = new HashMap<>();
 
-    public PlatServiceRestClient() {
+    public PlatClient() {
         catalogue.put(1, new Plat(1, "Salade nicoise", new BigDecimal("8.50")));
         catalogue.put(2, new Plat(2, "Aioli provencal", new BigDecimal("12.00")));
         catalogue.put(3, new Plat(3, "Gratin dauphinois", new BigDecimal("9.00")));
@@ -33,4 +33,5 @@ public class PlatServiceRestClient implements IPlatService {
         return plat;
     }
 }
+
 

@@ -88,6 +88,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>
+                        WEB-INF/classes/com/yourcompany/menus/adapter/out/persistence/MenuRepositoryJpa*.class,
+                        WEB-INF/classes/com/yourcompany/menus/adapter/out/service/PlatServiceRestClient*.class,
+                        WEB-INF/classes/com/yourcompany/menus/application/port/out/IPlatService.class
+                    </packagingExcludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

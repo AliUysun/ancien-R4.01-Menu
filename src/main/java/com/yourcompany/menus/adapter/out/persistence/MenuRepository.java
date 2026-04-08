@@ -6,9 +6,12 @@ import com.yourcompany.menus.domain.entity.Plat;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -23,7 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 
 @ApplicationScoped
-public class MenuRepositoryJpa implements IMenuRepository {
+@MenuRepositoryType
+public class MenuRepository implements IMenuRepository {
 
     private static final String SELECT_NEXT_ID = "SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM menus";
     private static final String SELECT_MENUS = "SELECT id, nom, createur_id, createur_nom, date_creation, date_mise_a_jour, prix_total FROM menus ORDER BY id";
@@ -225,9 +229,17 @@ public class MenuRepositoryJpa implements IMenuRepository {
         private static Map<String, String> loadDotEnv() {
             Map<String, String> env = new HashMap<>();
             Path path = resolveDotEnvPath();
-            if (!Files.exists(path)) {
+
+            if (path != null && Files.exists(path)) {
+                loadDotEnvFromPath(path, env);
                 return env;
             }
+
+            loadDotEnvFromResource(env);
+            return env;
+        }
+
+        private static void loadDotEnvFromPath(Path path, Map<String, String> env) {
             try {
                 for (String line : Files.readAllLines(path)) {
                     String trimmed = line.trim();
@@ -242,21 +254,73 @@ public class MenuRepositoryJpa implements IMenuRepository {
             } catch (IOException ignored) {
                 // Si le fichier n'est pas lisible, on se repose sur les variables d'environnement du systeme.
             }
-            return env;
+        }
+
+        private static void loadDotEnvFromResource(Map<String, String> env) {
+            try (InputStream inputStream = MenuRepository.class.getResourceAsStream("/.env")) {
+                if (inputStream == null) {
+                    return;
+                }
+                try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                    StringBuilder content = new StringBuilder();
+                    char[] buffer = new char[1024];
+                    int read;
+                    while ((read = reader.read(buffer)) != -1) {
+                        content.append(buffer, 0, read);
+                    }
+                    for (String line : content.toString().split("\\R")) {
+                        String trimmed = line.trim();
+                        if (trimmed.startsWith("#") || !trimmed.contains("=")) {
+                            continue;
+                        }
+                        int split = trimmed.indexOf('=');
+                        String key = trimmed.substring(0, split).trim();
+                        String value = trimmed.substring(split + 1).trim();
+                        env.put(key, stripQuotes(value));
+                    }
+                }
+            } catch (IOException ignored) {
+                // Fallback silencieux: on utilisera les variables d'environnement du systeme.
+            }
         }
 
         private static Path resolveDotEnvPath() {
-            String customPath = System.getenv("MENUS_DOTENV_PATH");
+            String customPath = firstNonBlank(System.getenv("MENUS_DOTENV_PATH"), System.getProperty("MENUS_DOTENV_PATH"));
+            if (customPath == null || customPath.isBlank()) {
+                customPath = firstExistingCandidate(
+                        Path.of(".env"),
+                        Path.of(System.getProperty("user.dir", ".")).resolve(".env"),
+                        Path.of(System.getProperty("user.home", ".")).resolve(".env")
+                );
+            }
             if (customPath != null && !customPath.isBlank()) {
                 return Path.of(customPath);
             }
-            return Path.of(".env");
+            return null;
+        }
+
+        private static String firstNonBlank(String... values) {
+            for (String value : values) {
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        private static String firstExistingCandidate(Path... candidates) {
+            for (Path candidate : candidates) {
+                if (candidate != null && Files.exists(candidate)) {
+                    return candidate.toString();
+                }
+            }
+            return null;
         }
 
         private static String require(Map<String, String> values, String key) {
             String value = values.get(key);
             if (value == null || value.isBlank()) {
-                throw new IllegalStateException("Configuration manquante: " + key + " (variable d'environnement ou .env)");
+                throw new IllegalStateException("Configuration manquante: " + key + " (variable d'environnement, .env ou MENUS_DOTENV_PATH)");
             }
             return value;
         }

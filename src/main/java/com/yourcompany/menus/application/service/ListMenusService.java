@@ -1,9 +1,10 @@
 package com.yourcompany.menus.application.service;
 
+import com.yourcompany.menus.adapter.out.persistence.MenuRepositoryType;
 import com.yourcompany.menus.application.port.in.IListMenusUseCase;
 import com.yourcompany.menus.application.port.out.IMenuRepository;
 import com.yourcompany.menus.domain.entity.Menu;
-import com.yourcompany.menus.domain.service.MenuMetier;
+import com.yourcompany.menus.domain.service.IMenuMetier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -13,12 +14,12 @@ import java.util.List;
 public class ListMenusService implements IListMenusUseCase {
 
     private final IMenuRepository menuRepository;
-    private final MenuMetier menuMetier;
+    private final IMenuMetier menuMetier;
 
     @Inject
-    public ListMenusService(IMenuRepository menuRepository) {
+    public ListMenusService(@MenuRepositoryType IMenuRepository menuRepository, IMenuMetier menuMetier) {
         this.menuRepository = menuRepository;
-        this.menuMetier = new MenuMetier();
+        this.menuMetier = menuMetier;
     }
 
     @Override
@@ -30,4 +31,3 @@ public class ListMenusService implements IListMenusUseCase {
         return menus;
     }
 }
-

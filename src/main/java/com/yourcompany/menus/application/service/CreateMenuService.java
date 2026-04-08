@@ -1,8 +1,10 @@
 package com.yourcompany.menus.application.service;
 
+import com.yourcompany.menus.adapter.out.persistence.MenuRepositoryType;
 import com.yourcompany.menus.application.port.in.ICreateMenuUseCase;
 import com.yourcompany.menus.application.port.out.IMenuRepository;
 import com.yourcompany.menus.domain.entity.Menu;
+import com.yourcompany.menus.domain.service.IMenuMetier;
 import com.yourcompany.menus.domain.service.MenuMetier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -20,12 +22,16 @@ public class CreateMenuService implements ICreateMenuUseCase {
     );
 
     private final IMenuRepository menuRepository;
-    private final MenuMetier menuMetier;
+    private final IMenuMetier menuMetier;
 
     @Inject
-    public CreateMenuService(IMenuRepository menuRepository) {
+    public CreateMenuService(@MenuRepositoryType IMenuRepository menuRepository, IMenuMetier menuMetier) {
         this.menuRepository = menuRepository;
-        this.menuMetier = new MenuMetier();
+        this.menuMetier = menuMetier;
+    }
+
+    public CreateMenuService(IMenuRepository menuRepository) {
+        this(menuRepository, new MenuMetier());
     }
 
     @Override
@@ -49,4 +55,3 @@ public class CreateMenuService implements ICreateMenuUseCase {
         return createurNom;
     }
 }
-
